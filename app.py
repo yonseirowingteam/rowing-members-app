@@ -10,8 +10,8 @@ from datetime import datetime
 st.set_page_config(
     page_title="조정부 9월 챌린지",
     page_icon="🚣",
-    layout="centered", # 모바일에서 보기 좋게 중앙 정렬
-    initial_sidebar_state="collapsed" # 사이드바를 기본으로 숨김
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
 CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQKSCkdKmmNi07nmmO5RN6vDmt_dobOqdCpluVAoP-91dyu36nyuMjuXJXMXrzQDquOq9seEpHtN5_6/pub?gid=995447885&single=true&output=csv"
@@ -61,11 +61,15 @@ def load_data():
     if '구분' not in df.columns: df['구분'] = "기존"
     if '운동종류' not in df.columns: df['운동종류'] = "운동"
     if '메모' not in df.columns: df['메모'] = ""
+    
+    # 💡 강서윤 부원의 구분을 강제로 '신입'으로 변경
+    df.loc[df['이름'].astype(str).str.replace(' ', '') == '강서윤', '구분'] = '신입'
+    
     return df
 
 try:
     df = load_data()
-    # 공지에 따라 기본적으로 '기존' 부원 데이터만 사용 (신입은 10월부터)
+    # 💡 신입 부원(강서윤 등)을 제외하고 '기존' 부원 데이터만 표시하도록 필터링
     df = df[df['구분'] == '기존'] 
 except:
     st.error("데이터 로딩 오류")
@@ -99,27 +103,31 @@ ticket_df['총추첨권'] = ticket_df['기본추첨권'] + ticket_df['보너스�
 with tab1:
     st.subheader("🔥 명예의 전당")
     
-    # 1) 추첨권 Top 3
+    # 1) 추첨권 Top 3 (모바일 맞춤형 컴팩트 가로 UI 적용)
     st.markdown("##### 🎟️ 추첨권 획득 순위")
     ticket_rank = ticket_df.sort_values(by=['총추첨권', '총거리'], ascending=[False, False]).reset_index(drop=True)
     
-    top3_cols = st.columns(3)
     medals = ["🥇", "🥈", "🥉"]
+    
+    # 모바일에서도 무조건 가로 3칸으로 아담하게 나오도록 HTML Flexbox 사용
+    html_content = "<div style='display: flex; justify-content: space-between; gap: 8px; text-align: center; margin-bottom: 20px;'>"
+    
     for i in range(min(len(ticket_rank), 3)):
         row = ticket_rank.iloc[i]
-        with top3_cols[i]:
-            st.markdown(f"<div style='text-align: center; padding: 10px; border-radius: 10px; background-color: #f0f2f6;'>"
-                        f"<h3>{medals[i]}</h3>"
-                        f"<b>{row['이름']}</b><br>"
-                        f"<span style='font-size: 1.2rem; color: #ff4b4b;'><b>{row['총추첨권']}장</b></span>"
-                        f"</div>", unsafe_allow_html=True)
-    
-    st.write("") # 여백
+        html_content += f"""
+        <div style='flex: 1; padding: 10px 5px; border-radius: 10px; background-color: #f0f2f6; box-shadow: 1px 1px 3px rgba(0,0,0,0.1);'>
+            <div style='font-size: 1.5rem; margin-bottom: 2px;'>{medals[i]}</div>
+            <div style='font-size: 0.85rem; font-weight: bold; margin-bottom: 2px; color: #333;'>{row['이름']}</div>
+            <div style='font-size: 0.95rem; color: #ff4b4b; font-weight: bold;'>{row['총추첨권']}장</div>
+        </div>
+        """
+    html_content += "</div>"
+    st.markdown(html_content, unsafe_allow_html=True)
     
     # 2) 5만m 거리 랭킹
     st.markdown("##### 🏃 누적 거리 순위")
     dist_rank = ticket_df.sort_values(by='총거리', ascending=False).reset_index(drop=True)
-    for i in range(min(len(dist_rank), 5)): # Top 5까지만 간략히
+    for i in range(min(len(dist_rank), 5)): 
         row = dist_rank.iloc[i]
         달성률 = min(float(row['총거리'] / TARGET_METERS), 1.0)
         
@@ -178,7 +186,6 @@ with tab3:
     if photo_df.empty:
         st.write("아직 사진이 없습니다.")
     else:
-        # 최근 10개만 보여주어 로딩 속도 최적화
         for _, row in photo_df.head(10).iterrows():
             date_str = row['날짜'].strftime('%Y-%m-%d') if pd.notna(row['날짜']) else ""
             st.markdown(f"**{row['이름']}** 님의 인증 🏃‍♂️ ({date_str})")
@@ -188,5 +195,5 @@ with tab3:
                 
             img_urls = extract_drive_image_urls(row['사진링크'])
             if img_urls:
-                st.image(img_urls[0], use_container_width=True) # 피드 형식이라 첫 장만 크게 노출
+                st.image(img_urls[0], use_container_width=True) 
             st.divider()
