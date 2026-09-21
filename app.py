@@ -103,24 +103,23 @@ ticket_df['총추첨권'] = ticket_df['기본추첨권'] + ticket_df['보너스�
 with tab1:
     st.subheader("🔥 명예의 전당")
     
-    # 1) 추첨권 Top 3 (모바일 맞춤형 컴팩트 가로 UI 적용)
+    # 1) 추첨권 Top 3 (모바일 맞춤형 컴팩트 가로 UI 적용 및 코드 블록 에러 수정)
     st.markdown("##### 🎟️ 추첨권 획득 순위")
     ticket_rank = ticket_df.sort_values(by=['총추첨권', '총거리'], ascending=[False, False]).reset_index(drop=True)
     
     medals = ["🥇", "🥈", "🥉"]
     
-    # 모바일에서도 무조건 가로 3칸으로 아담하게 나오도록 HTML Flexbox 사용
     html_content = "<div style='display: flex; justify-content: space-between; gap: 8px; text-align: center; margin-bottom: 20px;'>"
     
     for i in range(min(len(ticket_rank), 3)):
         row = ticket_rank.iloc[i]
-        html_content += f"""
-        <div style='flex: 1; padding: 10px 5px; border-radius: 10px; background-color: #f0f2f6; box-shadow: 1px 1px 3px rgba(0,0,0,0.1);'>
-            <div style='font-size: 1.5rem; margin-bottom: 2px;'>{medals[i]}</div>
-            <div style='font-size: 0.85rem; font-weight: bold; margin-bottom: 2px; color: #333;'>{row['이름']}</div>
-            <div style='font-size: 0.95rem; color: #ff4b4b; font-weight: bold;'>{row['총추첨권']}장</div>
-        </div>
-        """
+        # 들여쓰기 마크다운 에러 방지를 위해 한 줄씩 이어붙이기
+        html_content += "<div style='flex: 1; padding: 10px 5px; border-radius: 10px; background-color: #f0f2f6; box-shadow: 1px 1px 3px rgba(0,0,0,0.1);'>"
+        html_content += f"<div style='font-size: 1.5rem; margin-bottom: 2px;'>{medals[i]}</div>"
+        html_content += f"<div style='font-size: 0.85rem; font-weight: bold; margin-bottom: 2px; color: #333;'>{row['이름']}</div>"
+        html_content += f"<div style='font-size: 0.95rem; color: #ff4b4b; font-weight: bold;'>{row['총추첨권']}장</div>"
+        html_content += "</div>"
+        
     html_content += "</div>"
     st.markdown(html_content, unsafe_allow_html=True)
     
