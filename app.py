@@ -103,7 +103,7 @@ ticket_df['총추첨권'] = ticket_df['기본추첨권'] + ticket_df['보너스�
 with tab1:
     st.subheader("🔥 명예의 전당")
     
-    # 1) 추첨권 Top 3 (모바일 맞춤형 컴팩트 가로 UI 적용 및 코드 블록 에러 수정)
+    # 1) 추첨권 Top 3
     st.markdown("##### 🎟️ 추첨권 획득 순위")
     ticket_rank = ticket_df.sort_values(by=['총추첨권', '총거리'], ascending=[False, False]).reset_index(drop=True)
     
@@ -113,7 +113,6 @@ with tab1:
     
     for i in range(min(len(ticket_rank), 3)):
         row = ticket_rank.iloc[i]
-        # 들여쓰기 마크다운 에러 방지를 위해 한 줄씩 이어붙이기
         html_content += "<div style='flex: 1; padding: 10px 5px; border-radius: 10px; background-color: #f0f2f6; box-shadow: 1px 1px 3px rgba(0,0,0,0.1);'>"
         html_content += f"<div style='font-size: 1.5rem; margin-bottom: 2px;'>{medals[i]}</div>"
         html_content += f"<div style='font-size: 0.85rem; font-weight: bold; margin-bottom: 2px; color: #333;'>{row['이름']}</div>"
@@ -180,7 +179,10 @@ with tab3:
     st.subheader("📸 훈련 갤러리")
     st.caption("부원들의 뜨거운 땀방울을 확인하세요!")
     
-    photo_df = df[df['사진링크'].astype(str).str.contains("http", na=False)].sort_values('날짜', ascending=False)
+    # 💡 [수정됨] 제출된 순서(인덱스)를 기록해두어, 같은 날짜일 경우 늦게 낸 사람(최신)이 위에 오도록 강력하게 정렬
+    photo_df = df[df['사진링크'].astype(str).str.contains("http", na=False)].copy()
+    photo_df['제출순서'] = photo_df.index
+    photo_df = photo_df.sort_values(by=['날짜', '제출순서'], ascending=[False, False])
     
     if photo_df.empty:
         st.write("아직 사진이 없습니다.")
