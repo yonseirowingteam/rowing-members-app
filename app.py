@@ -103,7 +103,7 @@ ticket_df['총추첨권'] = ticket_df['기본추첨권'] + ticket_df['보너스�
 with tab1:
     st.subheader("🔥 명예의 전당")
     
-    # 1) 추첨권 Top 3
+    # 1) 추첨권 Top 3 (모바일 맞춤형 컴팩트 가로 UI 적용 및 코드 블록 에러 수정)
     st.markdown("##### 🎟️ 추첨권 획득 순위")
     ticket_rank = ticket_df.sort_values(by=['총추첨권', '총거리'], ascending=[False, False]).reset_index(drop=True)
     
@@ -113,6 +113,7 @@ with tab1:
     
     for i in range(min(len(ticket_rank), 3)):
         row = ticket_rank.iloc[i]
+        # 들여쓰기 마크다운 에러 방지를 위해 한 줄씩 이어붙이기
         html_content += "<div style='flex: 1; padding: 10px 5px; border-radius: 10px; background-color: #f0f2f6; box-shadow: 1px 1px 3px rgba(0,0,0,0.1);'>"
         html_content += f"<div style='font-size: 1.5rem; margin-bottom: 2px;'>{medals[i]}</div>"
         html_content += f"<div style='font-size: 0.85rem; font-weight: bold; margin-bottom: 2px; color: #333;'>{row['이름']}</div>"
@@ -169,6 +170,25 @@ with tab2:
             my_data[['날짜', '운동종류', '총거리', '메모']].sort_values('날짜', ascending=False),
             use_container_width=True, hide_index=True
         )
+
+        # 💡 [추가됨] 개인 사진 갤러리 섹션
+        st.markdown("##### 📸 내 인증 사진 모아보기")
+        my_photos = my_data[my_data['사진링크'].astype(str).str.contains("http", na=False)]
+        my_photos['제출순서'] = my_photos.index
+        my_photos = my_photos.sort_values(by=['날짜', '제출순서'], ascending=[False, False])
+
+        if my_photos.empty:
+            st.caption("등록된 사진이 없습니다.")
+        else:
+            # 사진을 2열씩 나란히 보여주어 모바일에서 보기 좋게 배치
+            img_cols = st.columns(2)
+            for idx, row in my_photos.iterrows():
+                img_urls = extract_drive_image_urls(row['사진링크'])
+                if img_urls:
+                    date_str = row['날짜'].strftime('%m/%d') if pd.notna(row['날짜']) else ""
+                    # 리스트의 첫 번째 사진을 출력
+                    with img_cols[list(my_photos.index).index(idx) % 2]:
+                        st.image(img_urls[0], caption=f"{date_str} - {row['총거리']:,.0f}m", use_container_width=True)
     else:
         st.info("👆 위에서 이름을 선택하면 개인 기록을 볼 수 있습니다.")
 
@@ -179,7 +199,7 @@ with tab3:
     st.subheader("📸 훈련 갤러리")
     st.caption("부원들의 뜨거운 땀방울을 확인하세요!")
     
-    # 💡 [수정됨] 제출된 순서(인덱스)를 기록해두어, 같은 날짜일 경우 늦게 낸 사람(최신)이 위에 오도록 강력하게 정렬
+    # 💡 제출된 순서(인덱스)를 기록해두어, 같은 날짜일 경우 늦게 낸 사람(최신)이 위에 오도록 강력하게 정렬
     photo_df = df[df['사진링크'].astype(str).str.contains("http", na=False)].copy()
     photo_df['제출순서'] = photo_df.index
     photo_df = photo_df.sort_values(by=['날짜', '제출순서'], ascending=[False, False])
